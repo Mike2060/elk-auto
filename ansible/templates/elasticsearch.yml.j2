@@ -1,12 +1,12 @@
-network.host: {{ansible_default_ipv4}}
+network.host: {{ansible_default_ipv4.address}}
 http.host: 0.0.0.0
 transport.host: 0.0.0.0
 
-node.roles: [{{elasticsearch_roles}}]
+node.roles: {{elasticsearch_roles}}
 path.data: /var/lib/elasticsearch
 path.logs: /var/log/elasticsearch
-discovery.seed_hosts: [{{all_hosts}}]
-cluster.initial_master_nodes: [{{master_nodes}}]
+discovery.seed_hosts: {{all_hosts}}
+cluster.initial_master_nodes: {{master_nodes}}
 xpack.security.enabled: true
 xpack.security.enrollment.enabled: true
 
