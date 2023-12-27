@@ -1,0 +1,75 @@
+- hosts: masters
+  remote_user: admin
+  become: yes
+  vars:
+    - master_hosts: ["elk-master1", "elk-master2", "elk-master3"]
+    - warm_hosts: ["elk-warm1"]
+    - master_nodes: "{{ master_hosts | join(',') }}"
+    - all_hosts: "{{ master_hosts + warm_hosts | product([':9200']) | map('join') | list }}"
+    # for master nodes
+    - elasticsearch_roles: "{{['master','data_hot','data_content','ingest','remote_cluster_client'] | join(',')}}"
+    # for data nodes
+    # - roles: "{{['data_warm'] | join(',')}}"
+  tasks:
+    - name: remove elasticsearch
+      ansible.builtin.dnf:
+        name: elasticsearch
+        state: removed
+        disable_gpg_check: yes
+
+    - name: remove elasticsearch related directory
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/elasticsearch
+        - /usr/share/elasticsearch
+        - /var/lib/elasticsearch
+        - /var/log/elasticsearch
+
+    - name: install elasticsearch
+      ansible.builtin.dnf:
+        name: elasticsearch-8.8.1
+        state: installed
+        enablerepo: elasticsearch
+        disable_gpg_check: yes
+
+    - name: copy elasticsearch configs
+      ansible.builtin.template:
+        src: templates/elasticsearch.yml.j2
+        dest: /etc/elasticsearch/elasticsearch.yml
+        owner: elasticsearch
+        group: elasticsearch
+        mode: "0644"
+
+    - name: create elasticsearch certs directory
+      ansible.builtin.file:
+        path: /etc/elasticsearch/certs
+        state: directory
+        owner: elasticsearch
+        group: elasticsearch
+        mode: "0755"
+
+    - name: copy elasticsearch certs
+      ansible.builtin.file:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        owner: elasticsearch
+        group: elasticsearch
+        mode: "0644"
+      loop:
+        - {
+            src: "certs/elasticsearch.pem",
+            dest: "/etc/elasticsearch/certs/elasticsearch.pem",
+          }
+        - {
+            src: "certs/elasticsearch.key",
+            dest: "/etc/elasticsearch/certs/elasticsearch.key",
+          }
+        - { src: "certs/ca.crt", dest: "/etc/elasticsearch/certs/ca.crt" }
+
+    - name: enable and start elasticsearch
+      ansible.builtin.service:
+        name: elasticsearch
+        state: started
+        enabled: yes

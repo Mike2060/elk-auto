@@ -1,0 +1,52 @@
+network.host: {{ansible_default_ipv4}}
+http.host: 0.0.0.0
+transport.host: 0.0.0.0
+
+node.roles: [{{elasticsearch_roles}}]
+path.data: /var/lib/elasticsearch
+path.logs: /var/log/elasticsearch
+discovery.seed_hosts: [{{all_hosts}}]
+cluster.initial_master_nodes: [{{master_nodes}}]
+xpack.security.enabled: true
+xpack.security.enrollment.enabled: true
+
+
+# Enable encryption for HTTP API client connections, such as Kibana, Logstash, and Agents
+xpack.security.http.ssl:
+  enabled: true
+  #  keystore.path: certs/cert.p12
+  key: certs/elasticsearch.key
+  certificate: certs/elasticsearch.pem
+  certificate_authorities: [ certs/ca.crt ]
+  # client_authentication: none
+
+
+# Enable encryption and mutual authentication between cluster nodes
+xpack.security.transport.ssl:
+  enabled: true
+#  verification_mode: certificate
+#  keystore.path: certs/cert.p12
+#  truststore.path: certs/cert.p12
+  key: certs/elasticsearch.key
+  certificate: certs/elasticsearch.pem
+  certificate_authorities: [ certs/ca.crt ]
+  # client_authentication: none
+
+# By default, it is unlimited. When it reach the limit of circuit breaker, it prevent of the request increasing the size of cache
+# By the value is defined, the cache will begin clearing the least-recently-updated entries in the cache.
+indices.fielddata.cache.size: 90%
+
+#----------------------- END SECURITY AUTO CONFIGURATION -------------------------
+
+# for snapshot, all nodes must have the same path.repo
+path:
+  repo:
+    - /mnt/elasticsearch
+
+# for connecting to ad
+xpack.security.authc.realms:
+  active_directory:
+    ad:
+      order: 0
+      domain_name: "shacom.local"
+      url: "ldap://10.9.21.33/"
