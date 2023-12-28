@@ -2,10 +2,11 @@
   remote_user: admin
   become: yes
   vars:
-    - master_hosts: ["elk-master1", "elk-master3"]
+    - master_hosts: ["elk-master1", "elk-master2", "elk-master3"]
     - warm_hosts: ["elk-warm1"]
+    - cluster_name: "elasticsearch"
     - master_nodes: "{{ master_hosts }}"
-    - all_hosts: "{{ (master_hosts + warm_hosts) | product([':9200']) | map('join') | list }}"
+    - discovery_hosts: "{{ (master_hosts + warm_hosts) | difference([inventory_hostname]) | product([':9300']) | map('join') | list }}"
     # for master nodes
     - elasticsearch_roles: "{{['master','data_hot','data_content','ingest','remote_cluster_client']}}"
     # for data nodes
@@ -41,6 +42,11 @@
         owner: elasticsearch
         group: elasticsearch
         mode: "0644"
+
+    - name: remove default elasticsearch certs directory
+      ansible.builtin.file:
+        path: /etc/elasticsearch/certs
+        state: absent
 
     - name: create elasticsearch certs directory
       ansible.builtin.file:
