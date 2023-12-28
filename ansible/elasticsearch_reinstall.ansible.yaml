@@ -59,14 +59,14 @@
         mode: "0644"
       loop:
         - {
-            src: "./certs/elasticsearch.pem",
+            src: "./certs/{{ansible_default_ipv4.address}}/{{ansible_default_ipv4.address}}.pem",
             dest: "/etc/elasticsearch/certs/elasticsearch.pem",
           }
         - {
-            src: "./certs/elasticsearch.key",
+            src: "./certs/{{ansible_default_ipv4.address}}/{{ansible_default_ipv4.address}}.key",
             dest: "/etc/elasticsearch/certs/elasticsearch.key",
           }
-        - { src: "./certs/ca.crt", dest: "/etc/elasticsearch/certs/ca.crt" }
+        - { src: "./certs/ca.pem", dest: "/etc/elasticsearch/certs/ca.pem" }
 
     - name: enable and start elasticsearch
       ansible.builtin.service:
